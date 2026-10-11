@@ -178,7 +178,7 @@
     var deskNow = desktop && desktop.matches;
     DATA.shops.forEach(function (shop, i) {
       var card = shopCard(shop);
-      if (!deskNow && i === 0) { first.appendChild(card); }
+      if (!deskNow && i === 0) { card.classList.remove("reveal"); first.appendChild(card); }
       else { after.appendChild(card); }
     });
     observeReveal(document);
