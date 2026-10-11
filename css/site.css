@@ -1,13 +1,13 @@
 @font-face {
   font-family: "DM Serif Display";
-  src: url("../fonts/dm-serif-display-latin.woff2") format("woff2");
+  src: url("../fonts/dm-serif-display-latin.woff2?v=20261011c") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "DM Sans";
-  src: url("../fonts/dm-sans-latin.woff2") format("woff2");
+  src: url("../fonts/dm-sans-latin.woff2?v=20261011c") format("woff2");
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -114,18 +114,18 @@ ul.plain, ul.menu-list { list-style: none; margin: 0; padding: 0; }
 /* Hero and shop cards */
 .hero-band {
   position: relative; display: flex; align-items: flex-end;
-  min-height: 220px; overflow: hidden; background: var(--forest); color: var(--paper);
+  min-height: 560px; min-height: 74svh; overflow: hidden; background: var(--forest); color: var(--paper);
 }
 .hero-media { position: absolute; inset: 0; z-index: 0; }
 .hero-poster, .hero-video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
 }
-.hero-poster { background: var(--forest) url("../media/coffee-poster.jpg") center / cover no-repeat; }
+.hero-poster { background: var(--forest) url("../media/coffee-poster.jpg?v=20261011c") center / cover no-repeat; }
 .hero-band::after {
   content: ""; position: absolute; inset: 0; z-index: 1;
-  background: linear-gradient(90deg, rgba(30, 59, 47, 0.82) 0%, rgba(30, 59, 47, 0.55) 55%, rgba(30, 59, 47, 0.28) 100%);
+  background: linear-gradient(to top, rgba(30, 59, 47, 0.84) 0%, rgba(30, 59, 47, 0.5) 36%, rgba(30, 59, 47, 0) 68%);
 }
-.hero-copy { position: relative; z-index: 2; width: 100%; padding-top: 22px; padding-bottom: 58px; }
+.hero-copy { position: relative; z-index: 2; width: 100%; padding-top: 22px; padding-bottom: 36px; }
 .hero-copy h1 { color: var(--paper); margin-top: 6px; }
 .eyebrow { margin: 0; font: 700 13px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); }
 .hero-copy .intro { color: var(--paper); }
@@ -138,7 +138,7 @@ ul.plain, ul.menu-list { list-style: none; margin: 0; padding: 0; }
   background: transparent; color: var(--paper); font: 700 16px/1.2 var(--sans); cursor: pointer;
 }
 .hero-play:hover { background: rgba(243, 239, 231, 0.14); }
-.shops { position: relative; z-index: 3; display: grid; gap: 18px; margin-top: -40px; }
+.shops { position: relative; z-index: 3; display: grid; gap: 18px; margin-top: 0; }
 .shop {
   position: relative; display: flex; flex-direction: column; background: var(--paper);
   border: 1.5px solid var(--forest); border-radius: 4px;
