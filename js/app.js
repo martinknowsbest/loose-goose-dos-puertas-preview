@@ -499,17 +499,34 @@
   function initHeroVideo() {
     var video = document.querySelector("[data-hero-video]");
     if (!video) { return; }
+    var playBtn = document.querySelector("[data-hero-play]");
     var saveData = !!(navigator.connection && navigator.connection.saveData);
-    if (reduceMotion || saveData) { video.remove(); return; }
-    video.muted = true;
-    var started = video.play();
-    if (started && typeof started.catch === "function") {
-      started.catch(function () { video.remove(); });
+    var holdBack = reduceMotion || saveData;
+
+    function showPlay() { if (playBtn) { playBtn.hidden = false; } }
+    function hidePlay() { if (playBtn) { playBtn.hidden = true; } }
+    function start() {
+      video.muted = true;
+      var p = video.play();
+      if (p && typeof p.then === "function") {
+        p.then(hidePlay, showPlay);
+      }
     }
+
+    video.muted = true;
+    if (playBtn) {
+      playBtn.addEventListener("click", function () { start(); });
+    }
+    if (holdBack) {
+      video.removeAttribute("autoplay");
+      video.pause();
+      showPlay();
+      return;
+    }
+    start();
     document.addEventListener("visibilitychange", function () {
-      if (!video.isConnected) { return; }
       if (document.hidden) { video.pause(); }
-      else { var again = video.play(); if (again && again.catch) { again.catch(function () {}); } }
+      else { start(); }
     });
   }
 

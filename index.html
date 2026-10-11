@@ -40,15 +40,16 @@
       <div class="hero-band">
         <div class="hero-media" aria-hidden="true">
           <div class="hero-poster"></div>
-          <video class="hero-video" data-hero-video muted loop playsinline preload="none" poster="media/coffee-poster.jpg">
-            <source src="media/coffee-loop.webm" type="video/webm">
+          <video class="hero-video" data-hero-video muted loop playsinline autoplay preload="auto" poster="media/coffee-poster.jpg">
             <source src="media/coffee-loop.mp4" type="video/mp4">
+            <source src="media/coffee-loop.webm" type="video/webm">
           </video>
         </div>
         <div class="wrap hero-copy">
           <p class="eyebrow">Two shops in Terre Haute, Indiana</p>
           <h1 id="home-title">Loose Goose</h1>
           <p class="intro">Coffee and Goose Juice in Terre Haute.</p>
+          <p class="hero-actions"><button class="hero-play" type="button" data-hero-play hidden>Play video</button></p>
         </div>
       </div>
 
