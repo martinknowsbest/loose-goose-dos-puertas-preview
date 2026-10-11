@@ -1,13 +1,13 @@
 @font-face {
   font-family: "DM Serif Display";
-  src: url("../fonts/dm-serif-display-latin.woff2?v=20261011h") format("woff2");
+  src: url("../fonts/dm-serif-display-latin.woff2?v=20261011i") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "DM Sans";
-  src: url("../fonts/dm-sans-latin.woff2?v=20261011h") format("woff2");
+  src: url("../fonts/dm-sans-latin.woff2?v=20261011i") format("woff2");
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -123,7 +123,7 @@ ul.plain, ul.menu-list { list-style: none; margin: 0; padding: 0; }
 .hero-poster, .hero-video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
 }
-.hero-poster { background: var(--forest) url("../media/coffee-milk-poster.jpg?v=20261011h") center / cover no-repeat; }
+.hero-poster { background: var(--forest) url("../media/coffee-milk-poster.jpg?v=20261011i") center / cover no-repeat; }
 .scrub-stage::after {
   content: ""; position: absolute; inset: 0; z-index: 1;
   background: linear-gradient(to bottom, rgba(30, 59, 47, 0.7) 0%, rgba(30, 59, 47, 0.42) 30%, rgba(30, 59, 47, 0) 58%);
@@ -135,7 +135,8 @@ ul.plain, ul.menu-list { list-style: none; margin: 0; padding: 0; }
 .intro { margin-top: 10px; font-size: 18px; line-height: 1.4; color: var(--ink); max-width: 32ch; }
 @media (min-width: 820px) { .intro { white-space: normal; overflow: visible; font-size: 20px; } }
 
-.hero-actions { margin-top: 16px; }
+.hero-actions { display: none; }
+.scrub.is-static .hero-actions { display: block; margin-top: 16px; }
 .hero-play {
   min-height: 48px; padding: 0 18px; border-radius: 4px; border: 1.5px solid var(--paper);
   background: transparent; color: var(--paper); font: 700 16px/1.2 var(--sans); cursor: pointer;
