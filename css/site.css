@@ -1,13 +1,13 @@
 @font-face {
   font-family: "DM Serif Display";
-  src: url("../fonts/dm-serif-display-latin.woff2?v=20261011c") format("woff2");
+  src: url("../fonts/dm-serif-display-latin.woff2?v=20261011d") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "DM Sans";
-  src: url("../fonts/dm-sans-latin.woff2?v=20261011c") format("woff2");
+  src: url("../fonts/dm-sans-latin.woff2?v=20261011d") format("woff2");
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -112,32 +112,31 @@ ul.plain, ul.menu-list { list-style: none; margin: 0; padding: 0; }
 .nav a[aria-current="page"] { color: var(--forest); font-weight: 700; }
 
 /* Hero and shop cards */
-.hero-band {
-  position: relative; display: flex; align-items: flex-end;
-  min-height: 560px; min-height: 74svh; overflow: hidden; background: var(--forest); color: var(--paper);
+.scrub { position: relative; height: 300vh; height: 300svh; }
+.scrub-stage {
+  position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden;
+  background: var(--forest); color: var(--paper);
 }
+.scrub.is-static { height: auto; }
+.scrub.is-static .scrub-stage { position: relative; }
 .hero-media { position: absolute; inset: 0; z-index: 0; }
 .hero-poster, .hero-video {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
 }
-.hero-poster { background: var(--forest) url("../media/coffee-poster.jpg?v=20261011c") center / cover no-repeat; }
-.hero-band::after {
+.hero-poster { background: var(--forest) url("../media/coffee-poster.jpg?v=20261011d") center / cover no-repeat; }
+.scrub-stage::after {
   content: ""; position: absolute; inset: 0; z-index: 1;
-  background: linear-gradient(to top, rgba(30, 59, 47, 0.84) 0%, rgba(30, 59, 47, 0.5) 36%, rgba(30, 59, 47, 0) 68%);
+  background: linear-gradient(to bottom, rgba(30, 59, 47, 0.7) 0%, rgba(30, 59, 47, 0.42) 30%, rgba(30, 59, 47, 0) 58%);
 }
-.hero-copy { position: relative; z-index: 2; width: 100%; padding-top: 22px; padding-bottom: 36px; }
-.hero-copy h1 { color: var(--paper); margin-top: 6px; }
+.hero-copy { position: relative; z-index: 2; width: 100%; padding-top: 16px; }
+.hero-copy h1 { color: var(--paper); margin-top: 2px; }
 .eyebrow { margin: 0; font: 700 13px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); }
 .hero-copy .intro { color: var(--paper); }
 .intro { margin-top: 10px; font-size: 18px; line-height: 1.4; color: var(--ink); max-width: 32ch; }
 @media (min-width: 820px) { .intro { white-space: normal; overflow: visible; font-size: 20px; } }
 
-.hero-actions { margin-top: 18px; }
-.hero-play {
-  min-height: 48px; padding: 0 18px; border-radius: 4px; border: 1.5px solid var(--paper);
-  background: transparent; color: var(--paper); font: 700 16px/1.2 var(--sans); cursor: pointer;
-}
-.hero-play:hover { background: rgba(243, 239, 231, 0.14); }
+.hero-first { position: relative; z-index: 2; padding-top: 12px; }
+.hero-first .shop { background: rgba(243, 239, 231, 0.84); }
 .shops { position: relative; z-index: 3; display: grid; gap: 18px; margin-top: 0; }
 .shop {
   position: relative; display: flex; flex-direction: column; background: var(--paper);
@@ -294,8 +293,8 @@ a.btn[aria-disabled="true"], a.is-off {
   .nav { position: static; display: flex; flex-direction: row; gap: 4px; background: none; border: 0; padding: 0; box-shadow: none; }
   .nav a { min-height: 44px; padding: 0 14px; border: 0; border-radius: 4px; font-size: 16px; }
   .nav a:hover { background: rgba(30, 59, 47, 0.08); }
-  .hero-band { min-height: 340px; }
-  .hero-copy { padding-top: 48px; padding-bottom: 104px; }
+  .hero-first { display: none; }
+  .hero-copy { padding-top: 56px; }
   .shops { grid-template-columns: 1fr 1fr; gap: 28px; margin-top: -72px; }
   .shop { padding: 28px 28px 24px; }
   .actions { grid-template-columns: 1fr 1fr; }

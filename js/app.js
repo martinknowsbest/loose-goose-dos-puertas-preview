@@ -257,9 +257,16 @@
   }
 
   function renderShops() {
-    var box = document.querySelector("[data-shops]");
-    box.textContent = "";
-    DATA.shops.forEach(function (shop) { box.appendChild(shopCard(shop)); });
+    var first = document.querySelector("[data-shops-first]");
+    var after = document.querySelector("[data-shops-after]");
+    first.textContent = "";
+    after.textContent = "";
+    var deskNow = desktop && desktop.matches;
+    DATA.shops.forEach(function (shop, i) {
+      var card = shopCard(shop);
+      if (!deskNow && i === 0) { first.appendChild(card); }
+      else { after.appendChild(card); }
+    });
     refreshSelection();
     updateBottomBar();
   }
@@ -483,7 +490,7 @@
       if (e.target.closest && e.target.closest("a")) { setMenu(false); }
     });
     if (desktop && desktop.addEventListener) {
-      desktop.addEventListener("change", function () { setMenu(false); syncBar(); });
+      desktop.addEventListener("change", function () { setMenu(false); syncBar(); renderShops(); });
     }
   }
 
@@ -496,38 +503,77 @@
     });
   }
 
-  function initHeroVideo() {
+  function initScrub() {
+    var scrub = document.querySelector("[data-scrub]");
     var video = document.querySelector("[data-hero-video]");
-    if (!video) { return; }
-    var playBtn = document.querySelector("[data-hero-play]");
+    if (!scrub || !video) { return; }
     var saveData = !!(navigator.connection && navigator.connection.saveData);
-    var holdBack = reduceMotion || saveData;
-
-    function showPlay() { if (playBtn) { playBtn.hidden = false; } }
-    function hidePlay() { if (playBtn) { playBtn.hidden = true; } }
-    function start() {
-      video.muted = true;
-      var p = video.play();
-      if (p && typeof p.then === "function") {
-        p.then(hidePlay, showPlay);
-      }
-    }
-
     video.muted = true;
-    if (playBtn) {
-      playBtn.addEventListener("click", function () { start(); });
-    }
-    if (holdBack) {
-      video.removeAttribute("autoplay");
-      video.pause();
-      showPlay();
+    video.pause();
+    video.addEventListener("play", function () { video.pause(); });
+    if (reduceMotion || saveData) {
+      scrub.classList.add("is-static");
+      video.preload = "none";
+      video.controls = true;
       return;
     }
-    start();
-    document.addEventListener("visibilitychange", function () {
-      if (document.hidden) { video.pause(); }
-      else { start(); }
-    });
+    var ready = false;
+    var queued = false;
+    var pending = false;
+    var last = -1;
+
+    function schedule() {
+      if (queued) { return; }
+      queued = true;
+      requestAnimationFrame(draw);
+    }
+    function progress() {
+      var span = scrub.offsetHeight - window.innerHeight;
+      if (span <= 0) { return 0; }
+      var p = -scrub.getBoundingClientRect().top / span;
+      return p < 0 ? 0 : (p > 1 ? 1 : p);
+    }
+    function draw() {
+      queued = false;
+      if (!ready || !isFinite(video.duration) || video.duration <= 0) { return; }
+      if (video.seeking) { pending = true; return; }
+      var p = progress();
+      if (Math.abs(p - last) < 0.0005) { return; }
+      last = p;
+      video.currentTime = Math.max(0, Math.min(p * video.duration, video.duration - 0.04));
+    }
+    function markReady() {
+      if (ready) { return; }
+      ready = true;
+      last = -1;
+      schedule();
+    }
+    function fullyBuffered() {
+      var b = video.buffered;
+      if (!b || !b.length || !isFinite(video.duration) || video.duration <= 0) { return false; }
+      return b.end(b.length - 1) >= video.duration - 0.05;
+    }
+
+    video.addEventListener("seeked", function () { if (pending) { pending = false; schedule(); } });
+    video.addEventListener("progress", function () { if (!ready && fullyBuffered()) { markReady(); } });
+    video.addEventListener("canplaythrough", function () { if (!ready && fullyBuffered()) { markReady(); } });
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+
+    var source = video.querySelector("source");
+    var url = source ? source.getAttribute("src") : null;
+    if (url && window.fetch && window.URL && URL.createObjectURL) {
+      fetch(url).then(function (r) {
+        if (!r.ok) { throw new Error("video status " + r.status); }
+        return r.blob();
+      }).then(function (blob) {
+        source.parentNode.removeChild(source);
+        video.addEventListener("loadeddata", markReady, { once: true });
+        video.src = URL.createObjectURL(blob);
+        video.load();
+      }).catch(function () {});
+    }
+    schedule();
   }
 
   function init() {
@@ -536,7 +582,7 @@
     renderMenu();
     renderFind();
     renderFooterAndContact();
-    initHeroVideo();
+    initScrub();
     initMenu();
     window.addEventListener("hashchange", function () { showPage(routeName()); });
     window.addEventListener("scroll", syncBar, { passive: true });
