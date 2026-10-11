@@ -4,16 +4,23 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#F3EFE7">
+  <meta name="theme-color" content="#1E3B2F">
   <title>Loose Goose · Terre Haute</title>
   <meta name="description" content="Loose Goose Coffee Company in Terre Haute, Indiana: coffee, Goose Juice, and two shops.">
   <link rel="icon" href="data:,">
-  <link rel="preload" href="fonts/dm-sans-latin.woff2?v=20261011k" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/dm-serif-display-latin.woff2?v=20261011k" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/site.css?v=20261011k">
+  <link rel="preload" href="fonts/dm-sans-latin.woff2?v=20261011l" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/dm-serif-display-latin.woff2?v=20261011l" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/site.css?v=20261011l">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="video-bg" aria-hidden="true">
+    <div class="hero-poster"></div>
+    <video class="hero-video" data-hero-video muted playsinline preload="auto" poster="media/coffee-milk-poster.jpg?v=20261011i">
+                  <source src="media/coffee-milk.mp4?v=20261011i" type="video/mp4">
+                </video>
+  </div>
 
   <header class="top">
     <nav class="pill-nav glass" aria-label="Main">
@@ -34,27 +41,19 @@
   <main id="main" tabindex="-1">
     <section class="page" data-page="home" aria-labelledby="home-title">
       <div class="scrub" data-scrub>
-        <div class="scrub-stage">
-          <div class="hero-media" aria-hidden="true">
-            <div class="hero-poster"></div>
-            <video class="hero-video" data-hero-video muted playsinline preload="auto" poster="media/coffee-milk-poster.jpg?v=20261011i">
-                          <source src="media/coffee-milk.mp4?v=20261011i" type="video/mp4">
-                        </video>
+        <div class="wrap hero-copy">
+          <div class="hero-panel glass-dark">
+            <p class="tag tag-light">Terre Haute, Indiana</p>
+            <h1 id="home-title">Loose Goose</h1>
+            <p class="intro">Coffee and Goose Juice on Terre Haute's south and north sides.</p>
+            <p class="hero-actions"><button class="btn btn-glass hero-play" type="button" data-hero-play hidden>Play video</button></p>
           </div>
-          <div class="wrap hero-copy">
-            <div class="hero-panel glass-dark">
-              <p class="tag tag-light">Terre Haute, Indiana</p>
-              <h1 id="home-title">Loose Goose</h1>
-              <p class="intro">Coffee and Goose Juice on Terre Haute's south and north sides.</p>
-              <p class="hero-actions"><button class="btn btn-glass hero-play" type="button" data-hero-play hidden>Play video</button></p>
-            </div>
-          </div>
-          <div class="wrap hero-first" data-shops-first></div>
         </div>
+        <div class="wrap hero-first" data-shops-first></div>
       </div>
 
       <div class="wrap home-body">
-        <div class="section-head reveal">
+        <div class="section-head glass reveal">
           <p class="tag">Two shops</p>
           <h2>Find the shops</h2>
         </div>
@@ -86,31 +85,37 @@
     </section>
 
     <section class="page" data-page="menu" aria-labelledby="menu-title" hidden>
-      <div class="wrap page-head reveal">
-        <p class="tag">Menu</p>
-        <h1 id="menu-title">What we serve</h1>
-        <p class="intro">Coffee drinks, Goose Juice, pastries and bagels.</p>
+      <div class="wrap page-body">
+        <div class="page-head glass reveal">
+          <p class="tag">Menu</p>
+          <h1 id="menu-title">What we serve</h1>
+          <p class="intro">Coffee drinks, Goose Juice, pastries and bagels.</p>
+        </div>
+        <div data-menu-list></div>
+        <p class="source-note">Items from a Tribune-Star article, December 2024.</p>
       </div>
-      <div class="wrap page-body" data-menu-list></div>
-      <div class="wrap"><p class="source-note">Items from a Tribune-Star article, December 2024.</p></div>
     </section>
 
     <section class="page" data-page="find-us" aria-labelledby="find-title" hidden>
-      <div class="wrap page-head reveal">
-        <p class="tag">Two shops</p>
-        <h1 id="find-title">Find us</h1>
-        <p class="intro">South on 7th Street, north on Lafayette Avenue.</p>
+      <div class="wrap page-body">
+        <div class="page-head glass reveal">
+          <p class="tag">Two shops</p>
+          <h1 id="find-title">Find us</h1>
+          <p class="intro">South on 7th Street, north on Lafayette Avenue.</p>
+        </div>
+        <div data-find-list></div>
       </div>
-      <div class="wrap page-body" data-find-list></div>
     </section>
 
     <section class="page" data-page="contact" aria-labelledby="contact-title" hidden>
-      <div class="wrap page-head reveal">
-        <p class="tag">Contact</p>
-        <h1 id="contact-title">Say hello</h1>
-        <p class="intro">Call the South shop, or find both shops on Facebook and Yelp.</p>
+      <div class="wrap page-body">
+        <div class="page-head glass reveal">
+          <p class="tag">Contact</p>
+          <h1 id="contact-title">Say hello</h1>
+          <p class="intro">Call the South shop, or find both shops on Facebook and Yelp.</p>
+        </div>
+        <div data-contact-list></div>
       </div>
-      <div class="wrap page-body" data-contact-list></div>
     </section>
   </main>
 
@@ -141,7 +146,7 @@
   </nav>
 
   <noscript><p class="wrap">This page needs JavaScript to show the shops.</p></noscript>
-  <script src="js/data.js?v=20261011k"></script>
-  <script src="js/app.js?v=20261011k" defer></script>
+  <script src="js/data.js?v=20261011l"></script>
+  <script src="js/app.js?v=20261011l" defer></script>
 </body>
 </html>

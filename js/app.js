@@ -4,11 +4,6 @@
   var DATA = window.LOOSE_GOOSE_DATA;
   if (!DATA) { return; }
 
-  var DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-  var DAY_NAMES = {
-    monday: "Monday", tuesday: "Tuesday", wednesday: "Wednesday", thursday: "Thursday",
-    friday: "Friday", saturday: "Saturday", sunday: "Sunday"
-  };
   var PAGE_TITLES = { home: "Loose Goose", menu: "Menu", "find-us": "Find Us", contact: "Contact" };
   var reduceMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false;
   var saveData = !!(navigator.connection && navigator.connection.saveData);
@@ -40,77 +35,18 @@
 
   function telHref(s) { return "tel:" + s.phone.tel; }
 
-  function h12(hhmm) {
-    var p = hhmm.split(":");
-    var h = parseInt(p[0], 10);
-    return ((h % 12) || 12) + ":" + p[1] + " " + (h < 12 ? "AM" : "PM");
-  }
-
-  function toMinutes(hhmm) {
-    var p = hhmm.split(":");
-    return parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
-  }
-
-  function townNow(date) {
-    var parts = {};
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: DATA.timeZone, weekday: "long", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
-    }).formatToParts(date).forEach(function (p) { parts[p.type] = p.value; });
-    return {
-      day: parts.weekday.toLowerCase(),
-      minutes: parseInt(parts.hour, 10) * 60 + parseInt(parts.minute, 10)
-    };
-  }
-
-  function statusFor(shop, date) {
-    if (!shop.hours) { return null; }
-    var now = townNow(date || new Date());
-    var today = shop.hours.week[now.day];
-    if (today === "closed") { return { kind: "closed", text: "Closed today" }; }
-    var open = toMinutes(today.open);
-    var close = toMinutes(today.close);
-    if (now.minutes >= open && now.minutes < close) {
-      return { kind: "open", text: "Open now · closes " + h12(today.close) };
-    }
-    if (now.minutes < open) {
-      return { kind: "closed", text: "Closed now · opens " + h12(today.open) };
-    }
-    return { kind: "closed", text: "Closed now" };
-  }
-
-  function dayText(v) {
-    if (v === "closed") { return "Closed"; }
-    return h12(v.open) + " to " + h12(v.close);
-  }
-
-  function statusNode(st) {
-    var wrap = el("p", "status " + st.kind);
-    wrap.appendChild(el("span", "dot"));
-    wrap.appendChild(el("span", "status-text", st.text));
-    return wrap;
-  }
-
   function pillRow(items, cls) {
     var row = el("ul", "pill-row" + (cls ? " " + cls : ""));
     items.forEach(function (t) { row.appendChild(el("li", "tag", t)); });
     return row;
   }
 
-  function hoursTable(shop) {
-    var table = el("table", "hours");
-    var body = el("tbody");
-    var now = townNow(new Date());
-    DAYS.forEach(function (d) {
-      var tr = el("tr");
-      if (d === now.day) { tr.className = "today"; }
-      var th = el("th", null, DAY_NAMES[d]);
-      th.scope = "row";
-      tr.appendChild(th);
-      tr.appendChild(el("td", null, dayText(shop.hours.week[d])));
-      body.appendChild(tr);
-    });
-    table.appendChild(body);
-    return table;
+  function facebookButton() {
+    var fb = el("a", "btn btn-glass", "Facebook page");
+    fb.href = DATA.links.facebook;
+    fb.target = "_blank";
+    fb.rel = "noopener";
+    return fb;
   }
 
   function shopCard(shop) {
@@ -120,8 +56,6 @@
     var h = el("h2", "shop-name", shop.name);
     h.id = "name-" + shop.id;
     card.appendChild(h);
-    var st = statusFor(shop);
-    if (st) { card.appendChild(statusNode(st)); }
     card.appendChild(el("p", "shop-line", addressText(shop)));
     card.appendChild(pillRow(shop.tags));
     var actions = el("div", "actions");
@@ -135,29 +69,9 @@
     go.target = "_blank";
     go.rel = "noopener";
     actions.appendChild(go);
-    if (!shop.hours) {
-      var fb = el("a", "btn btn-glass", "Facebook page");
-      fb.href = DATA.links.facebook;
-      fb.target = "_blank";
-      fb.rel = "noopener";
-      actions.appendChild(fb);
-    }
+    actions.appendChild(facebookButton());
     card.appendChild(actions);
-    if (shop.hours) {
-      var det = el("details", "hours-details");
-      det.appendChild(el("summary", "pill-sm", "All hours"));
-      det.appendChild(hoursTable(shop));
-      card.appendChild(det);
-    }
     return card;
-  }
-
-  function observeReveal(root) {
-    var nodes = (root || document).querySelectorAll(".reveal:not(.is-in)");
-    nodes.forEach(function (n) {
-      if (!revealIO || reduceMotion || saveData) { n.classList.add("is-in"); }
-      else { revealIO.observe(n); }
-    });
   }
 
   var revealIO = ("IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
@@ -168,6 +82,14 @@
       }
     });
   }, { threshold: 0.12 }) : null;
+
+  function observeReveal(root) {
+    var nodes = (root || document).querySelectorAll(".reveal:not(.is-in)");
+    nodes.forEach(function (n) {
+      if (!revealIO || reduceMotion || saveData) { n.classList.add("is-in"); }
+      else { revealIO.observe(n); }
+    });
+  }
 
   function renderShops() {
     var first = document.querySelector("[data-shops-first]");
@@ -184,22 +106,20 @@
     observeReveal(document);
   }
 
-  function renderMenuCards(target) {
-    target.textContent = "";
-    DATA.menu.forEach(function (cat) {
-      var card = el("section", "block glass reveal");
-      card.setAttribute("aria-labelledby", "menu-" + cat.id);
-      var h = el("h3", "block-title", cat.name);
-      h.id = "menu-" + cat.id;
-      card.appendChild(h);
-      card.appendChild(pillRow(cat.items, "pill-row-menu"));
-      target.appendChild(card);
-    });
-  }
-
   function renderMenuPage() {
     var list = document.querySelector("[data-menu-list]");
-    if (list) { renderMenuCards(list); }
+    if (list) {
+      list.textContent = "";
+      DATA.menu.forEach(function (cat) {
+        var card = el("section", "block glass reveal");
+        card.setAttribute("aria-labelledby", "menu-" + cat.id);
+        var h = el("h3", "block-title", cat.name);
+        h.id = "menu-" + cat.id;
+        card.appendChild(h);
+        card.appendChild(pillRow(cat.items, "pill-row-menu"));
+        list.appendChild(card);
+      });
+    }
     var featured = document.querySelector("[data-featured]");
     if (featured) {
       featured.textContent = "";
@@ -216,55 +136,49 @@
     list.appendChild(grid);
   }
 
+  function linkButton(label, href, cls) {
+    var a = el("a", cls || "btn btn-glass", label);
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener";
+    return a;
+  }
+
   function renderContact() {
     var box = document.querySelector("[data-contact-list]");
     if (!box) { return; }
     box.textContent = "";
+    var south = shopById("south");
+    var north = shopById("north");
+
     var call = el("section", "block glass reveal");
     call.appendChild(el("h2", "block-title", "Call"));
-    var south = shopById("south");
     call.appendChild(el("p", "shop-line", south.name + ", " + addressText(south)));
-    var actions = el("div", "actions");
+    var a1 = el("div", "actions");
     var tel = el("a", "btn btn-primary", "Call " + south.phone.display);
     tel.href = telHref(south);
-    actions.appendChild(tel);
-    actions.appendChild(el("a", "btn btn-glass", "Directions"));
-    actions.lastChild.href = directionsHref(south);
-    actions.lastChild.target = "_blank";
-    actions.lastChild.rel = "noopener";
-    call.appendChild(actions);
+    a1.appendChild(tel);
+    a1.appendChild(linkButton("Directions", directionsHref(south)));
+    call.appendChild(a1);
     box.appendChild(call);
 
-    var north = shopById("north");
     var visit = el("section", "block glass reveal");
     visit.appendChild(el("h2", "block-title", "North shop"));
     visit.appendChild(el("p", "shop-line", north.name + ", " + addressText(north)));
     visit.appendChild(pillRow(north.tags));
-    var nActions = el("div", "actions");
-    var nGo = el("a", "btn btn-glass", "Directions");
-    nGo.href = directionsHref(north);
-    nGo.target = "_blank";
-    nGo.rel = "noopener";
-    nActions.appendChild(nGo);
-    var nFb = el("a", "btn btn-glass", "Facebook page");
-    nFb.href = DATA.links.facebook;
-    nFb.target = "_blank";
-    nFb.rel = "noopener";
-    nActions.appendChild(nFb);
-    visit.appendChild(nActions);
+    var a2 = el("div", "actions");
+    a2.appendChild(linkButton("Directions", directionsHref(north)));
+    a2.appendChild(facebookButton());
+    visit.appendChild(a2);
     box.appendChild(visit);
 
     var online = el("section", "block glass reveal");
     online.appendChild(el("h2", "block-title", "Online"));
-    var oActions = el("div", "actions");
-    [["Facebook page", DATA.links.facebook], ["Yelp reviews", DATA.links.yelp], ["Google reviews", DATA.links.googleReviews]].forEach(function (pair) {
-      var a = el("a", "btn btn-glass", pair[0]);
-      a.href = pair[1];
-      a.target = "_blank";
-      a.rel = "noopener";
-      oActions.appendChild(a);
-    });
-    online.appendChild(oActions);
+    var a3 = el("div", "actions");
+    a3.appendChild(linkButton("Facebook page", DATA.links.facebook));
+    a3.appendChild(linkButton("Yelp reviews", DATA.links.yelp));
+    a3.appendChild(linkButton("Google reviews", DATA.links.googleReviews));
+    online.appendChild(a3);
     box.appendChild(online);
   }
 
@@ -346,9 +260,9 @@
     var scrub = document.querySelector("[data-scrub]");
     var video = document.querySelector("[data-hero-video]");
     if (!scrub || !video) { return; }
-    var saveData = !!(navigator.connection && navigator.connection.saveData);
     video.muted = true;
     video.pause();
+
     if (reduceMotion || saveData) {
       scrub.classList.add("is-static");
       video.preload = "none";
@@ -366,7 +280,9 @@
       }
       return;
     }
+
     video.addEventListener("play", function () { video.pause(); });
+
     var ready = false;
     var queued = false;
     var pending = false;
@@ -377,20 +293,20 @@
       queued = true;
       requestAnimationFrame(draw);
     }
-    function progress() {
-      var span = scrub.offsetHeight - window.innerHeight;
-      if (span <= 0) { return 0; }
-      var p = -scrub.getBoundingClientRect().top / span;
-      return p < 0 ? 0 : (p > 1 ? 1 : p);
-    }
+    // One full pass of the clip covers two screen heights of scroll, as the hero did.
+    // The same rate holds at the top of the page; further down, the clip keeps moving.
+    function scrollPerPass() { return Math.max(1, 2 * window.innerHeight); }
     function draw() {
       queued = false;
       if (!ready || !isFinite(video.duration) || video.duration <= 0) { return; }
       if (video.seeking) { pending = true; return; }
-      var p = progress();
-      if (Math.abs(p - last) < 0.0005) { return; }
-      last = p;
-      video.currentTime = Math.max(0, Math.min(p * video.duration, video.duration - 0.04));
+      var D = video.duration;
+      var y = window.scrollY || window.pageYOffset || 0;
+      var t = (y / scrollPerPass()) * D;
+      t = t - D * Math.floor(t / D);
+      if (Math.abs(t - last) < 0.0005) { return; }
+      last = t;
+      video.currentTime = Math.max(0, Math.min(t, D - 0.04));
     }
     function markReady() {
       if (ready) { return; }
