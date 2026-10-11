@@ -5,34 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
   <meta name="theme-color" content="#F3EFE7">
-  <title>Loose Goose · Demo</title>
-  <meta name="description" content="Private demo of the Loose Goose site. Not the final site.">
+  <title>Loose Goose · Terre Haute</title>
+  <meta name="description" content="Loose Goose Coffee Company in Terre Haute, Indiana: coffee, Goose Juice, and two shops.">
   <link rel="icon" href="data:,">
-  <link rel="preload" href="fonts/dm-sans-latin.woff2?v=20261011i" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/dm-serif-display-latin.woff2?v=20261011i" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/site.css?v=20261011i">
+  <link rel="preload" href="fonts/dm-sans-latin.woff2?v=20261011j" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/dm-serif-display-latin.woff2?v=20261011j" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/site.css?v=20261011j">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <p class="demo-label">Demo: not the final site</p>
 
   <header class="top">
-    <div class="wrap top-in">
-      <a class="brand" href="#/" aria-label="Loose Goose home">
-        <span class="brand-name">Loose Goose</span>
-        <span class="brand-sub">Terre Haute, Indiana</span>
-      </a>
-      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-btn>
+    <nav class="pill-nav glass" aria-label="Main">
+      <a class="brand" href="#/" aria-label="Loose Goose home">Loose Goose</a>
+      <div id="site-nav" class="pill-links" data-nav>
+        <a class="pill" href="#/" data-link="home">Home</a>
+        <a class="pill" href="#/menu" data-link="menu">Menu</a>
+        <a class="pill" href="#/find-us" data-link="find-us">Find Us</a>
+        <a class="pill" href="#/contact" data-link="contact">Contact</a>
+      </div>
+      <button class="pill pill-menu" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-btn>
         <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
         <span data-menu-label>Menu</span>
       </button>
-      <nav id="site-nav" class="nav" data-nav aria-label="Main">
-        <a href="#/" data-link="home">Home</a>
-        <a href="#/menu" data-link="menu">Menu</a>
-        <a href="#/find-us" data-link="find-us">Find Us</a>
-        <a href="#/contact" data-link="contact">Contact</a>
-      </nav>
-    </div>
+    </nav>
   </header>
 
   <main id="main" tabindex="-1">
@@ -42,125 +38,110 @@
           <div class="hero-media" aria-hidden="true">
             <div class="hero-poster"></div>
             <video class="hero-video" data-hero-video muted playsinline preload="auto" poster="media/coffee-milk-poster.jpg?v=20261011i">
-              <source src="media/coffee-milk.mp4?v=20261011i" type="video/mp4">
-            </video>
+                          <source src="media/coffee-milk.mp4?v=20261011i" type="video/mp4">
+                        </video>
           </div>
           <div class="wrap hero-copy">
-            <p class="eyebrow">Two shops in Terre Haute, Indiana</p>
-            <h1 id="home-title">Loose Goose</h1>
-            <p class="intro">Coffee and Goose Juice in Terre Haute.</p>
-            <p class="hero-actions"><button class="hero-play" type="button" data-hero-play hidden>Play video</button></p>
+            <div class="hero-panel glass-dark">
+              <p class="tag tag-light">Terre Haute, Indiana</p>
+              <h1 id="home-title">Loose Goose</h1>
+              <p class="intro">Coffee and Goose Juice on Terre Haute's south and north sides.</p>
+              <p class="hero-actions"><button class="btn btn-glass hero-play" type="button" data-hero-play hidden>Play video</button></p>
+            </div>
           </div>
           <div class="wrap hero-first" data-shops-first></div>
         </div>
       </div>
 
-      <div class="wrap">
+      <div class="wrap home-body">
+        <div class="section-head reveal">
+          <p class="tag">Two shops</p>
+          <h2>Find the shops</h2>
+        </div>
         <div class="shops" data-shops-after></div>
 
-        <div class="site-block">
-          <h2>A taste of the menu</h2>
-          <ul class="menu-list" data-featured></ul>
-          <p class="actions-row"><a class="btn btn-primary" href="#/menu">See the full menu</a></p>
-        </div>
+        <section class="block glass reveal" aria-labelledby="home-menu-title">
+          <h2 id="home-menu-title" class="block-title">What we serve</h2>
+          <div class="menu-compact" data-featured></div>
+          <p class="actions-row"><a class="btn btn-primary" href="#/menu">See the menu</a></p>
+        </section>
 
-        <div class="site-block">
-          <h2>Our story</h2>
-          <p class="story-text"><span data-fill="story"></span></p>
-          <figure class="photo-ph" role="img" aria-label="Photo placeholder: storefront, to be provided">
-            <span class="photo-ph-title">Photo placeholder</span>
-            <span class="photo-ph-text">Storefront, to be provided</span>
-          </figure>
-        </div>
+        <section class="block glass reveal" aria-labelledby="story-title">
+          <h2 id="story-title" class="block-title">The story</h2>
+          <p class="lead">Rachel and Richard Targett opened Loose Goose in December 2021 on Terre Haute's south side, at 3020 S. 7th Street.</p>
+          <p>Rachel had worked as a barista and a retail manager. She opened her own shop to gain control over quality and customer service. Crimson Cup's 7 Steps to Success program helped them get started.</p>
+          <blockquote class="quote">&ldquo;Nothing is better than coffee with your best friend,&rdquo; Rachel said. &ldquo;Don't forget to bring your pups through the drive-thru!&rdquo;</blockquote>
+          <p>The shop is named for Goose, the Targetts' black Labrador. In December 2024 a second location opened on Lafayette Avenue, on the north side. It is drive-thru only.</p>
+          <blockquote class="quote">&ldquo;We wanted to expand to the northside and give northsiders a good local coffee shop to come to,&rdquo; said manager Lydia Neidermeier.</blockquote>
+        </section>
+
+        <section class="block glass reveal" aria-labelledby="reviews-title">
+          <h2 id="reviews-title" class="block-title">Reviews</h2>
+          <div class="actions">
+            <a class="btn btn-glass" href="https://www.google.com/maps/search/?api=1&amp;query=Loose+Goose+Coffee+Company+Terre+Haute" target="_blank" rel="noopener">Google reviews</a>
+            <a class="btn btn-glass" href="https://www.yelp.com/biz/loose-goose-coffee-company-terre-haute" target="_blank" rel="noopener">Yelp reviews</a>
+          </div>
+        </section>
       </div>
     </section>
 
     <section class="page" data-page="menu" aria-labelledby="menu-title" hidden>
-      <div class="wrap">
-        <h1 id="menu-title">Menu</h1>
-        <p class="intro">Item names and prices are to be confirmed by the owner.</p>
-        <p class="note">Milk, size, and syrup options: <span class="placeholder">[to be confirmed]</span></p>
-        <div class="chips" data-menu-jump></div>
-        <div data-menu-list></div>
+      <div class="wrap page-head reveal">
+        <p class="tag">Menu</p>
+        <h1 id="menu-title">What we serve</h1>
+        <p class="intro">Coffee drinks, Goose Juice, pastries and bagels.</p>
       </div>
+      <div class="wrap page-body" data-menu-list></div>
+      <div class="wrap"><p class="source-note">Items from a Tribune-Star article, December 2024.</p></div>
     </section>
 
     <section class="page" data-page="find-us" aria-labelledby="find-title" hidden>
-      <div class="wrap">
-        <h1 id="find-title">Find Us</h1>
-        <p class="intro">Two shops in Terre Haute. Hours are sample hours until the owner confirms them.</p>
-        <div data-find-list></div>
+      <div class="wrap page-head reveal">
+        <p class="tag">Two shops</p>
+        <h1 id="find-title">Find us</h1>
+        <p class="intro">South on 7th Street, north on Lafayette Avenue.</p>
       </div>
+      <div class="wrap page-body" data-find-list></div>
     </section>
 
     <section class="page" data-page="contact" aria-labelledby="contact-title" hidden>
-      <div class="wrap">
-        <h1 id="contact-title">Contact</h1>
-        <div class="site-block">
-          <h2>Phone</h2>
-          <p>Main line: <span data-fill="mainPhone"></span></p>
-          <ul class="plain" data-contact-phones></ul>
-        </div>
-        <div class="site-block">
-          <h2>Email</h2>
-          <p>Email: <span data-fill="email"></span></p>
-        </div>
-        <div class="site-block">
-          <h2>Send a message</h2>
-          <form class="form" data-form novalidate>
-            <div class="field">
-              <label for="f-name">Name</label>
-              <input id="f-name" name="name" type="text" autocomplete="name">
-            </div>
-            <div class="field">
-              <label for="f-email">Email</label>
-              <input id="f-email" name="email" type="email" autocomplete="email">
-            </div>
-            <div class="field">
-              <label for="f-message">Message</label>
-              <textarea id="f-message" name="message" rows="5"></textarea>
-            </div>
-            <button class="btn btn-primary btn-block" type="submit">Send message</button>
-            <p class="form-status" data-form-status role="status" aria-live="polite"></p>
-          </form>
-        </div>
+      <div class="wrap page-head reveal">
+        <p class="tag">Contact</p>
+        <h1 id="contact-title">Say hello</h1>
+        <p class="intro">Call the South shop, or find both shops on Facebook and Yelp.</p>
       </div>
+      <div class="wrap page-body" data-contact-list></div>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="wrap footer-grid">
+    <div class="wrap footer-card glass">
       <div>
         <p class="foot-name">Loose Goose</p>
-        <p>Coffee shop in Terre Haute, Indiana.</p>
-        <p>Legal name: <span data-fill="legalName"></span></p>
+        <p>Coffee Company · Terre Haute, Indiana</p>
       </div>
       <div>
-        <h2>Locations</h2>
-        <ul class="plain" data-foot-shops></ul>
-      </div>
-      <div>
-        <h2>Social</h2>
+        <h2 class="foot-h">Online</h2>
         <ul class="plain">
-          <li>Facebook: <span data-fill="facebook"></span></li>
-          <li>Instagram: <span data-fill="instagram"></span></li>
+          <li><a href="https://www.facebook.com/Loose-Goose-Coffee-Company-101215739033765" target="_blank" rel="noopener">Facebook page</a></li>
+          <li><a href="https://www.yelp.com/biz/loose-goose-coffee-company-terre-haute" target="_blank" rel="noopener">Yelp reviews</a></li>
         </ul>
       </div>
-    </div>
-    <div class="wrap foot-legal">
-      <p>Privacy policy: <span data-fill="privacyPolicy"></span> · Terms of use: <span data-fill="termsOfUse"></span> · Accessibility statement: <span data-fill="accessibilityStatement"></span></p>
-      <p>© <span data-fill="copyright"></span> Loose Goose</p>
+      <div>
+        <p class="foot-source">Details from a Tribune-Star article (December 2024), a 2022 press release, and two public listings.</p>
+        <p class="preview-note">Preview</p>
+      </div>
     </div>
   </footer>
 
-  <nav class="bottom-bar" aria-label="Quick actions for the selected shop" data-bottom inert>
-    <a class="bb-btn bb-call" href="#" data-bb-call>Call<span class="bb-sub" data-bb-call-sub></span></a>
-    <a class="bb-btn bb-map" href="#" data-bb-map>Get directions<span class="bb-sub" data-bb-map-sub></span></a>
-    <a class="bb-btn bb-menu" href="#/menu">Menu<span class="bb-sub">Full menu</span></a>
+  <nav class="bottom-bar glass" aria-label="Quick actions for the South shop" data-bottom inert>
+    <a class="bb-btn bb-call" href="#" data-bb-call>Call<span class="bb-sub">South</span></a>
+    <a class="bb-btn bb-map" href="#" data-bb-map>Directions<span class="bb-sub">South</span></a>
+    <a class="bb-btn bb-menu" href="#/menu">Menu<span class="bb-sub">What we serve</span></a>
   </nav>
 
-  <noscript><p class="wrap">This demo needs JavaScript to show shop details.</p></noscript>
-  <script src="js/data.js?v=20261011i"></script>
-  <script src="js/app.js?v=20261011i" defer></script>
+  <noscript><p class="wrap">This page needs JavaScript to show the shops.</p></noscript>
+  <script src="js/data.js?v=20261011j"></script>
+  <script src="js/app.js?v=20261011j" defer></script>
 </body>
 </html>

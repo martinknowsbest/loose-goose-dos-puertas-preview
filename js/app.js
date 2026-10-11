@@ -11,9 +11,15 @@
   };
   var PAGE_TITLES = { home: "Loose Goose", menu: "Menu", "find-us": "Find Us", contact: "Contact" };
   var reduceMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false;
+  var saveData = !!(navigator.connection && navigator.connection.saveData);
   var desktop = window.matchMedia ? window.matchMedia("(min-width: 820px)") : null;
-  var selectedId = DATA.shops[0].id;
   var barShown = false;
+
+  if (reduceMotion || saveData) { document.documentElement.classList.add("no-motion"); }
+
+  var nav = document.querySelector("[data-nav]");
+  var menuBtn = document.querySelector("[data-menu-btn]");
+  var menuLabel = document.querySelector("[data-menu-label]");
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -22,37 +28,17 @@
     return n;
   }
 
-  function ph(text) { return el("span", "placeholder", "[" + text + "]"); }
-
-  function tag(text) { return el("span", "tag", text || "to be confirmed"); }
-
-  function fill(node, parts) {
-    node.textContent = "";
-    parts.forEach(function (p) {
-      if (p === null || p === undefined || p === false) { return; }
-      node.appendChild(typeof p === "string" ? document.createTextNode(p) : p);
-    });
-    return node;
-  }
-
   function shopById(id) {
     return DATA.shops.filter(function (s) { return s.id === id; })[0];
   }
 
-  function selectedShop() { return shopById(selectedId) || DATA.shops[0]; }
-
   function addressText(s) { return s.address.line1 + ", " + s.address.line2; }
 
-  function mapsSearch(s) {
-    return "https://www.google.com/maps/search/?api=1&query=" +
-      encodeURIComponent(s.name + ", " + addressText(s));
+  function directionsHref(s) {
+    return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(s.name + ", " + addressText(s));
   }
 
-  function mapsDirections(s) {
-    return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(addressText(s));
-  }
-
-  function telHref(s) { return s.phone.tel ? "tel:" + s.phone.tel : null; }
+  function telHref(s) { return "tel:" + s.phone.tel; }
 
   function h12(hhmm) {
     var p = hhmm.split(":");
@@ -76,189 +62,117 @@
     };
   }
 
-  function estadoSede(shop, date) {
+  function statusFor(shop, date) {
+    if (!shop.hours) { return null; }
     var now = townNow(date || new Date());
     var today = shop.hours.week[now.day];
-    var base = { day: now.day, today: today };
-    if (!shop.hours.confirmed || today === null || today === undefined) {
-      return Object.assign(base, { kind: "pending", text: "Hours to be confirmed" });
-    }
-    if (today === "closed") {
-      return Object.assign(base, { kind: "closed", text: "Closed today" });
-    }
+    if (today === "closed") { return { kind: "closed", text: "Closed today" }; }
     var open = toMinutes(today.open);
     var close = toMinutes(today.close);
     if (now.minutes >= open && now.minutes < close) {
-      return Object.assign(base, { kind: "open", text: "Open now · closes " + h12(today.close) });
+      return { kind: "open", text: "Open now · closes " + h12(today.close) };
     }
     if (now.minutes < open) {
-      return Object.assign(base, { kind: "closed", text: "Closed now · opens " + h12(today.open) });
+      return { kind: "closed", text: "Closed now · opens " + h12(today.open) };
     }
-    return Object.assign(base, { kind: "closed", text: "Closed now" });
+    return { kind: "closed", text: "Closed now" };
   }
 
   function dayText(v) {
-    if (v === null || v === undefined) { return null; }
     if (v === "closed") { return "Closed"; }
     return h12(v.open) + " to " + h12(v.close);
   }
 
-  function statusNode(est) {
-    var wrap = el("p", "status " + (est.kind === "pending" ? "pending" : est.kind));
+  function statusNode(st) {
+    var wrap = el("p", "status " + st.kind);
     wrap.appendChild(el("span", "dot"));
-    wrap.appendChild(el("span", "status-text", est.text));
+    wrap.appendChild(el("span", "status-text", st.text));
     return wrap;
   }
 
-  function row(label, valueParts) {
-    var r = el("div", "row");
-    r.appendChild(el("span", "k", label));
-    r.appendChild(fill(el("div", "v"), valueParts));
-    return r;
+  function pillRow(items, cls) {
+    var row = el("ul", "pill-row" + (cls ? " " + cls : ""));
+    items.forEach(function (t) { row.appendChild(el("li", "tag", t)); });
+    return row;
   }
 
-  function phoneParts(shop, withTag) {
-    if (!shop.phone.display) { return [ph("phone to be confirmed")]; }
-    var a = el("a", null, shop.phone.display);
-    a.href = telHref(shop);
-    return [a, withTag && !shop.phone.confirmed ? tag() : null];
-  }
-
-  function callLink(shop, cls) {
-    var a = el("a", cls);
-    if (shop.phone.tel) {
-      a.href = telHref(shop);
-      a.textContent = "Call";
-    } else {
-      a.textContent = "Call · to be confirmed";
-      a.setAttribute("aria-disabled", "true");
-      a.classList.add("is-off");
-    }
-    return a;
-  }
-
-  function unconfirmedNote(shop) {
-    var items = [];
-    if (!shop.address.confirmed) { items.push("address"); }
-    if (!shop.phone.display || !shop.phone.confirmed) { items.push("phone number"); }
-    if (shop.service && !shop.service.confirmed) { items.push("service (" + shop.service.text.toLowerCase() + ")"); }
-    if (!shop.hours.confirmed) { items.push("hours"); }
-    if (!items.length) { return null; }
-    var last = items[items.length - 1];
-    var list = items.length === 1 ? items[0] : items.length === 2 ? items[0] + " and " + last : items.slice(0, -1).join(", ") + ", and " + last;
-    var text = "To be confirmed: " + list + ".";
-    if (!shop.hours.confirmed) { text += " Hours shown are samples."; }
-    return el("p", "card-note", text);
-  }
-
-  function hoursRow(shop, est) {
-    var text = dayText(est.today);
-    var value;
-    if (text === null) {
-      value = [ph("hours to be confirmed")];
-    } else {
-      value = [el("span", "draw-line", text)];
-
-    }
-    return row("Today, " + DAY_NAMES[est.day], value);
+  function hoursTable(shop) {
+    var table = el("table", "hours");
+    var body = el("tbody");
+    var now = townNow(new Date());
+    DAYS.forEach(function (d) {
+      var tr = el("tr");
+      if (d === now.day) { tr.className = "today"; }
+      var th = el("th", null, DAY_NAMES[d]);
+      th.scope = "row";
+      tr.appendChild(th);
+      tr.appendChild(el("td", null, dayText(shop.hours.week[d])));
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+    return table;
   }
 
   function shopCard(shop) {
-    var card = el("article", "shop");
+    var card = el("article", "shop glass reveal");
     card.setAttribute("data-card", shop.id);
     card.setAttribute("aria-labelledby", "name-" + shop.id);
-
-    var head = el("div", "shop-head");
     var h = el("h2", "shop-name", shop.name);
     h.id = "name-" + shop.id;
-    var pick = el("button", "pick");
-    pick.type = "button";
-    pick.className = "pick";
-    pick.appendChild(el("span", "pick-text"));
-    pick.appendChild(el("span", "sr-only", " " + shop.name));
-    pick.addEventListener("click", function () { selectShop(shop.id); });
-    head.appendChild(h);
-    head.appendChild(pick);
-    card.appendChild(head);
-
-    var est = estadoSede(shop);
-    card.appendChild(statusNode(est));
-    card.appendChild(row("Address", [addressText(shop)]));
-    card.appendChild(hoursRow(shop, est));
-    card.appendChild(row("Phone", phoneParts(shop)));
-    if (shop.service) {
-      card.appendChild(row("Service", [shop.service.text]));
-    }
-
-    var note = unconfirmedNote(shop);
-    if (note) { card.appendChild(note); }
+    card.appendChild(h);
+    var st = statusFor(shop);
+    if (st) { card.appendChild(statusNode(st)); }
+    card.appendChild(el("p", "shop-line", addressText(shop)));
+    card.appendChild(pillRow(shop.tags));
     var actions = el("div", "actions");
-    actions.appendChild(callLink(shop, "btn btn-primary"));
-    var go = el("a", "btn btn-secondary", "Get directions");
-    go.href = mapsDirections(shop);
+    if (shop.phone) {
+      var call = el("a", "btn btn-primary", "Call " + shop.phone.display);
+      call.href = telHref(shop);
+      actions.appendChild(call);
+    }
+    var go = el("a", "btn btn-glass", "Directions");
+    go.href = directionsHref(shop);
+    go.target = "_blank";
+    go.rel = "noopener";
     actions.appendChild(go);
+    if (!shop.hours) {
+      var fb = el("a", "btn btn-glass", "Facebook page");
+      fb.href = DATA.links.facebook;
+      fb.target = "_blank";
+      fb.rel = "noopener";
+      actions.appendChild(fb);
+    }
     card.appendChild(actions);
+    if (shop.hours) {
+      var det = el("details", "hours-details");
+      det.appendChild(el("summary", "pill-sm", "All hours"));
+      det.appendChild(hoursTable(shop));
+      card.appendChild(det);
+    }
     return card;
   }
 
-  function refreshSelection() {
-    document.querySelectorAll("[data-card]").forEach(function (card) {
-      var on = card.getAttribute("data-card") === selectedId;
-      card.classList.toggle("is-selected", on);
-      var pick = card.querySelector(".pick");
-      pick.setAttribute("aria-pressed", on ? "true" : "false");
-      pick.querySelector(".pick-text").textContent = on ? "Selected" : "Select";
+  function observeReveal(root) {
+    var nodes = (root || document).querySelectorAll(".reveal:not(.is-in)");
+    nodes.forEach(function (n) {
+      if (!revealIO || reduceMotion || saveData) { n.classList.add("is-in"); }
+      else { revealIO.observe(n); }
     });
   }
 
-  function updateBottomBar() {
-    var s = selectedShop();
-    var call = document.querySelector("[data-bb-call]");
-    var callSub = document.querySelector("[data-bb-call-sub]");
-    var map = document.querySelector("[data-bb-map]");
-    var mapSub = document.querySelector("[data-bb-map-sub]");
-    if (s.phone.tel) {
-      call.href = telHref(s);
-      call.removeAttribute("aria-disabled");
-      call.classList.remove("is-off");
-      callSub.textContent = s.shortName;
-    } else {
-      call.removeAttribute("href");
-      call.setAttribute("aria-disabled", "true");
-      call.classList.add("is-off");
-      callSub.textContent = "to be confirmed";
-    }
-    map.href = mapsDirections(s);
-    mapSub.textContent = s.shortName;
-  }
-
-  function selectShop(id) {
-    selectedId = id;
-    refreshSelection();
-    updateBottomBar();
-  }
-
-  function observeDraws(root) {
-    var nodes = (root || document).querySelectorAll(".draw-line:not(.in-view)");
-    if (!nodes.length) { return; }
-    if (reduceMotion || !("IntersectionObserver" in window)) {
-      nodes.forEach(function (n) { n.classList.add("in-view"); });
-      return;
-    }
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in-view");
-          io.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.6 });
-    nodes.forEach(function (n) { io.observe(n); });
-  }
+  var revealIO = ("IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-in");
+        revealIO.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 }) : null;
 
   function renderShops() {
     var first = document.querySelector("[data-shops-first]");
     var after = document.querySelector("[data-shops-after]");
+    if (!first || !after) { return; }
     first.textContent = "";
     after.textContent = "";
     var deskNow = desktop && desktop.matches;
@@ -267,211 +181,110 @@
       if (!deskNow && i === 0) { first.appendChild(card); }
       else { after.appendChild(card); }
     });
-    refreshSelection();
-    updateBottomBar();
+    observeReveal(document);
   }
 
-  function menuRow(cat, item) {
-    var li = el("li", "menu-row");
-    var name = item.name ? el("span", "item-name", item.name) : fill(el("span", "item-name"), [ph(cat.id === "goose-juice" ? "flavor to be confirmed" : "name to be confirmed")]);
-    var price = fill(el("span", "item-price"), [ph("price to be confirmed")]);
-    li.appendChild(name);
-    li.appendChild(price);
-    return li;
-  }
-
-  function renderFeatured() {
-    var list = document.querySelector("[data-featured]");
-    list.textContent = "";
-    DATA.menu.categories.forEach(function (cat) {
-      cat.items.forEach(function (item) {
-        if (item.featured) { list.appendChild(menuRow(cat, item)); }
-      });
+  function renderMenuCards(target) {
+    target.textContent = "";
+    DATA.menu.forEach(function (cat) {
+      var card = el("section", "block glass reveal");
+      card.setAttribute("aria-labelledby", "menu-" + cat.id);
+      var h = el("h3", "block-title", cat.name);
+      h.id = "menu-" + cat.id;
+      card.appendChild(h);
+      card.appendChild(pillRow(cat.items, "pill-row-menu"));
+      target.appendChild(card);
     });
   }
 
-  function renderMenu() {
-    var jump = document.querySelector("[data-menu-jump]");
+  function renderMenuPage() {
     var list = document.querySelector("[data-menu-list]");
-    jump.textContent = "";
-    list.textContent = "";
-    DATA.menu.categories.forEach(function (cat) {
-      var chip = el("button", "chip", cat.name);
-      chip.type = "button";
-      chip.addEventListener("click", function () {
-        var target = document.getElementById("cat-" + cat.id);
-        if (target) { target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); }
-      });
-      jump.appendChild(chip);
-
-      var section = el("section", "menu-cat");
-      section.id = "cat-" + cat.id;
-      section.setAttribute("aria-labelledby", "h-" + cat.id);
-      var title = el("h2", "menu-cat-title", cat.name);
-      title.id = "h-" + cat.id;
-      section.appendChild(title);
-      var ul = el("ul", "menu-list");
-      cat.items.forEach(function (item) { ul.appendChild(menuRow(cat, item)); });
-      section.appendChild(ul);
-      list.appendChild(section);
-    });
-  }
-
-  function hoursTable(shop, est) {
-    var table = el("table", "hours");
-    var caption = el("caption", null, shop.hours.confirmed ? "Hours" : "Sample hours, to be confirmed");
-    table.appendChild(caption);
-    var body = el("tbody");
-    DAYS.forEach(function (d) {
-      var tr = el("tr");
-      if (d === est.day) { tr.className = "today"; }
-      var th = el("th", null, DAY_NAMES[d]);
-      th.scope = "row";
-      var td = el("td");
-      var text = dayText(shop.hours.week[d]);
-      if (text === null) {
-        td.appendChild(ph("hours to be confirmed"));
-      } else {
-        td.appendChild(el("span", d === est.day ? "draw-line" : null, text));
-      }
-      tr.appendChild(th);
-      tr.appendChild(td);
-      body.appendChild(tr);
-    });
-    table.appendChild(body);
-    return table;
-  }
-
-  function findBlock(shop) {
-    var section = el("section", "site-block shop-find");
-    section.setAttribute("aria-labelledby", "find-" + shop.id);
-    var h = el("h2", "shop-name", shop.name);
-    h.id = "find-" + shop.id;
-    section.appendChild(h);
-
-    var est = estadoSede(shop);
-    section.appendChild(statusNode(est));
-    section.appendChild(row("Address", [addressText(shop)]));
-    section.appendChild(row("Phone", phoneParts(shop)));
-    if (shop.service) {
-      section.appendChild(row("Service", [shop.service.text]));
+    if (list) { renderMenuCards(list); }
+    var featured = document.querySelector("[data-featured]");
+    if (featured) {
+      featured.textContent = "";
+      featured.appendChild(pillRow(DATA.menu.reduce(function (acc, cat) { return acc.concat(cat.items); }, []), "pill-row-menu"));
     }
-    section.appendChild(row("Entrance", [shop.entrance || ph("entrance directions to be confirmed")]));
-
-    var photo = el("figure", "photo-ph");
-    photo.setAttribute("role", "img");
-    photo.setAttribute("aria-label", "Photo placeholder: " + shop.shortName + " entrance, to be provided");
-    photo.appendChild(el("span", "photo-ph-title", "Photo placeholder"));
-    photo.appendChild(el("span", "photo-ph-text", shop.shortName + " entrance, to be provided"));
-    section.appendChild(photo);
-
-    section.appendChild(hoursTable(shop, est));
-
-    var findNote = unconfirmedNote(shop);
-    if (findNote) { section.appendChild(findNote); }
-    var actions = el("div", "actions");
-    var search = el("a", "btn btn-primary", "Search on Google Maps");
-    search.href = mapsSearch(shop);
-    search.target = "_blank";
-    search.rel = "noopener";
-    actions.appendChild(search);
-    actions.appendChild(callLink(shop, "btn btn-secondary"));
-    section.appendChild(actions);
-    return section;
   }
 
   function renderFind() {
     var list = document.querySelector("[data-find-list]");
+    if (!list) { return; }
     list.textContent = "";
     var grid = el("div", "find-grid");
-    DATA.shops.forEach(function (shop) { grid.appendChild(findBlock(shop)); });
+    DATA.shops.forEach(function (shop) { grid.appendChild(shopCard(shop)); });
     list.appendChild(grid);
   }
 
-  function renderFooterAndContact() {
-    var footList = document.querySelector("[data-foot-shops]");
-    footList.textContent = "";
-    DATA.shops.forEach(function (shop) {
-      var li = el("li");
-      fill(li, [el("strong", null, shop.name), el("br"), addressText(shop), shop.address.confirmed ? null : " ", shop.address.confirmed ? null : tag()]);
-      footList.appendChild(li);
-    });
+  function renderContact() {
+    var box = document.querySelector("[data-contact-list]");
+    if (!box) { return; }
+    box.textContent = "";
+    var call = el("section", "block glass reveal");
+    call.appendChild(el("h2", "block-title", "Call"));
+    var south = shopById("south");
+    call.appendChild(el("p", "shop-line", south.name + ", " + addressText(south)));
+    var actions = el("div", "actions");
+    var tel = el("a", "btn btn-primary", "Call " + south.phone.display);
+    tel.href = telHref(south);
+    actions.appendChild(tel);
+    actions.appendChild(el("a", "btn btn-glass", "Directions"));
+    actions.lastChild.href = directionsHref(south);
+    actions.lastChild.target = "_blank";
+    actions.lastChild.rel = "noopener";
+    call.appendChild(actions);
+    box.appendChild(call);
 
-    var phones = document.querySelector("[data-contact-phones]");
-    phones.textContent = "";
-    DATA.shops.forEach(function (shop) {
-      var li = el("li");
-      fill(li, [el("strong", null, shop.name + ": ")].concat(phoneParts(shop, true)));
-      phones.appendChild(li);
-    });
+    var north = shopById("north");
+    var visit = el("section", "block glass reveal");
+    visit.appendChild(el("h2", "block-title", "North shop"));
+    visit.appendChild(el("p", "shop-line", north.name + ", " + addressText(north)));
+    visit.appendChild(pillRow(north.tags));
+    var nActions = el("div", "actions");
+    var nGo = el("a", "btn btn-glass", "Directions");
+    nGo.href = directionsHref(north);
+    nGo.target = "_blank";
+    nGo.rel = "noopener";
+    nActions.appendChild(nGo);
+    var nFb = el("a", "btn btn-glass", "Facebook page");
+    nFb.href = DATA.links.facebook;
+    nFb.target = "_blank";
+    nFb.rel = "noopener";
+    nActions.appendChild(nFb);
+    visit.appendChild(nActions);
+    box.appendChild(visit);
 
-    var F = DATA.footer;
-    var C = DATA.contact;
-    var slots = {
-      story: [DATA.story, "story to be written with the owner"],
-      mainPhone: [C.mainPhone, "main phone to be confirmed"],
-      email: [C.email, "email to be confirmed"],
-      legalName: [F.legalName, "legal name to be confirmed"],
-      facebook: [F.facebook, "official page to be confirmed"],
-      instagram: [F.instagram, "to be confirmed"],
-      privacyPolicy: [F.privacyPolicy, "to be confirmed"],
-      termsOfUse: [F.termsOfUse, "to be confirmed"],
-      accessibilityStatement: [F.accessibilityStatement, "to be confirmed"],
-      copyright: [F.copyright, "year and legal owner to be confirmed"]
-    };
-    document.querySelectorAll("[data-fill]").forEach(function (node) {
-      var pair = slots[node.getAttribute("data-fill")];
-      if (!pair) { return; }
-      fill(node, [pair[0] ? pair[0] : ph(pair[1])]);
+    var online = el("section", "block glass reveal");
+    online.appendChild(el("h2", "block-title", "Online"));
+    var oActions = el("div", "actions");
+    [["Facebook page", DATA.links.facebook], ["Yelp reviews", DATA.links.yelp], ["Google reviews", DATA.links.googleReviews]].forEach(function (pair) {
+      var a = el("a", "btn btn-glass", pair[0]);
+      a.href = pair[1];
+      a.target = "_blank";
+      a.rel = "noopener";
+      oActions.appendChild(a);
     });
+    online.appendChild(oActions);
+    box.appendChild(online);
   }
 
-  function showPage(name) {
-    if (!PAGE_TITLES[name]) { name = "home"; }
-    document.querySelectorAll("[data-page]").forEach(function (section) {
-      section.hidden = section.getAttribute("data-page") !== name;
-    });
-    document.querySelectorAll("[data-link]").forEach(function (a) {
-      if (a.getAttribute("data-link") === name) { a.setAttribute("aria-current", "page"); }
-      else { a.removeAttribute("aria-current"); }
-    });
-    document.title = PAGE_TITLES[name] + " · Loose Goose demo";
-    setMenu(false);
-    window.scrollTo(0, 0);
-    var page = document.querySelector("[data-page='" + name + "']");
-    observeDraws(page);
-    var main = document.getElementById("main");
-    if (main) { main.focus({ preventScroll: true }); }
-    syncBar();
+  function updateBottomBar() {
+    var s = shopById("south");
+    var call = document.querySelector("[data-bb-call]");
+    var map = document.querySelector("[data-bb-map]");
+    if (call) { call.href = telHref(s); }
+    if (map) { map.href = directionsHref(s); }
   }
-
-  function routeName() {
-    var key = (location.hash || "").replace(/^#\/?/, "");
-    return key === "" ? "home" : key;
-  }
-
-  var menuBtn = document.querySelector("[data-menu-btn]");
-  var nav = document.querySelector("[data-nav]");
-  var menuLabel = document.querySelector("[data-menu-label]");
 
   function setMenu(open) {
+    if (!nav || !menuBtn) { return; }
     nav.classList.toggle("open", open);
     menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    menuLabel.textContent = open ? "Close" : "Menu";
-  }
-
-  function syncBar() {
-    var y = window.scrollY || window.pageYOffset || 0;
-    if (y > 300) { barShown = true; }
-    else if (y < 80) { barShown = false; }
-    var isPhone = !(desktop && desktop.matches);
-    var show = barShown && isPhone;
-    var bar = document.querySelector("[data-bottom]");
-    bar.classList.toggle("is-shown", show);
-    bar.toggleAttribute("inert", !show);
+    if (menuLabel) { menuLabel.textContent = open ? "Close" : "Menu"; }
   }
 
   function initMenu() {
+    if (!nav || !menuBtn) { return; }
     menuBtn.addEventListener("click", function () {
       setMenu(!nav.classList.contains("open"));
     });
@@ -489,18 +302,44 @@
     nav.addEventListener("click", function (e) {
       if (e.target.closest && e.target.closest("a")) { setMenu(false); }
     });
-    if (desktop && desktop.addEventListener) {
-      desktop.addEventListener("change", function () { setMenu(false); syncBar(); renderShops(); });
-    }
   }
 
-  var form = document.querySelector("[data-form]");
-  if (form) {
-    form.addEventListener("submit", function (e) {
-      e.preventDefault();
-      document.querySelector("[data-form-status]").textContent =
-        "Demo only. This form does not send messages yet, so nothing was sent.";
+  function syncBar() {
+    var bar = document.querySelector("[data-bottom]");
+    if (!bar) { return; }
+    var y = window.scrollY || window.pageYOffset || 0;
+    if (y > 300) { barShown = true; }
+    else if (y < 80) { barShown = false; }
+    var isPhone = !(desktop && desktop.matches);
+    var show = barShown && isPhone;
+    bar.classList.toggle("is-shown", show);
+    bar.toggleAttribute("inert", !show);
+  }
+
+  function routeName() {
+    var key = (location.hash || "").replace(/^#\/?/, "");
+    return key === "" ? "home" : key;
+  }
+
+  function showPage(name) {
+    if (!PAGE_TITLES[name]) { name = "home"; }
+    document.querySelectorAll("[data-page]").forEach(function (section) {
+      section.hidden = section.getAttribute("data-page") !== name;
     });
+    document.querySelectorAll("[data-link]").forEach(function (a) {
+      var on = a.getAttribute("data-link") === name;
+      a.classList.toggle("is-active", on);
+      if (on) { a.setAttribute("aria-current", "page"); }
+      else { a.removeAttribute("aria-current"); }
+    });
+    document.title = name === "home" ? "Loose Goose · Terre Haute" : PAGE_TITLES[name] + " · Loose Goose";
+    setMenu(false);
+    window.scrollTo(0, 0);
+    var page = document.querySelector("[data-page='" + name + "']");
+    observeReveal(page);
+    var main = document.getElementById("main");
+    if (main) { main.focus({ preventScroll: true }); }
+    syncBar();
   }
 
   function initScrub() {
@@ -589,20 +428,21 @@
 
   function init() {
     renderShops();
-    renderFeatured();
-    renderMenu();
+    renderMenuPage();
     renderFind();
-    renderFooterAndContact();
-    initScrub();
+    renderContact();
+    updateBottomBar();
     initMenu();
+    initScrub();
     window.addEventListener("hashchange", function () { showPage(routeName()); });
     window.addEventListener("scroll", syncBar, { passive: true });
     window.addEventListener("resize", syncBar);
+    if (desktop && desktop.addEventListener) {
+      desktop.addEventListener("change", function () { setMenu(false); syncBar(); renderShops(); });
+    }
     showPage(routeName());
-    observeDraws(document);
+    syncBar();
   }
 
   init();
-
-  window.LooseGoose = { estadoSede: estadoSede, townNow: townNow, selectShop: selectShop };
 })();
