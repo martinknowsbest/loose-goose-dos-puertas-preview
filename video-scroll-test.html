@@ -17,8 +17,8 @@
 <body>
   <div class="spacer" data-scrub>
     <div class="stage">
-      <video data-hero-video muted playsinline preload="auto" poster="media/coffee-milk-poster.jpg?v=20261011g">
-        <source src="media/coffee-milk.mp4?v=20261011g" type="video/mp4">
+      <video data-hero-video muted playsinline preload="auto" poster="media/coffee-milk-poster.jpg?v=20261011h">
+        <source src="media/coffee-milk.mp4?v=20261011h" type="video/mp4">
       </video>
     </div>
   </div>
@@ -30,13 +30,13 @@
     var saveData = !!(navigator.connection && navigator.connection.saveData);
     video.muted = true;
     video.pause();
-    video.addEventListener("play", function () { video.pause(); });
     if (reduceMotion || saveData) {
       scrub.classList.add("is-static");
       video.preload = "none";
       video.controls = true;
       return;
     }
+    video.addEventListener("play", function () { video.pause(); });
     var ready = false, queued = false, pending = false, last = -1;
     function schedule() { if (queued) { return; } queued = true; requestAnimationFrame(draw); }
     function progress() {

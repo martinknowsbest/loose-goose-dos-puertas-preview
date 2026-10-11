@@ -510,13 +510,24 @@
     var saveData = !!(navigator.connection && navigator.connection.saveData);
     video.muted = true;
     video.pause();
-    video.addEventListener("play", function () { video.pause(); });
     if (reduceMotion || saveData) {
       scrub.classList.add("is-static");
       video.preload = "none";
       video.controls = true;
+      var playBtn = document.querySelector("[data-hero-play]");
+      if (playBtn) {
+        playBtn.hidden = false;
+        playBtn.addEventListener("click", function () {
+          video.muted = true;
+          var p = video.play();
+          if (p && typeof p.then === "function") {
+            p.then(function () { playBtn.hidden = true; }, function () {});
+          }
+        });
+      }
       return;
     }
+    video.addEventListener("play", function () { video.pause(); });
     var ready = false;
     var queued = false;
     var pending = false;
