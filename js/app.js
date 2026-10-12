@@ -1,261 +1,145 @@
 (function () {
   "use strict";
 
-  var DATA = window.LOOSE_GOOSE_DATA;
-  if (!DATA) { return; }
-
-  var PAGE_TITLES = { home: "Loose Goose", menu: "Menu", "find-us": "Find Us", contact: "Contact" };
   var reduceMotion = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)").matches : false;
   var saveData = !!(navigator.connection && navigator.connection.saveData);
-  var desktop = window.matchMedia ? window.matchMedia("(min-width: 820px)") : null;
-  var barShown = false;
-
-  if (reduceMotion || saveData) { document.documentElement.classList.add("no-motion"); }
+  var noMotion = reduceMotion || saveData;
+  var root = document.documentElement;
+  if (noMotion) { root.classList.add("no-motion"); }
 
   var nav = document.querySelector("[data-nav]");
-  var menuBtn = document.querySelector("[data-menu-btn]");
-  var menuLabel = document.querySelector("[data-menu-label]");
+  var list = document.querySelector("[data-nav-list]");
+  var links = Array.prototype.slice.call(document.querySelectorAll("[data-nav-link]"));
+  var openBtn = document.querySelector("[data-nav-open]");
+  var expandBtn = document.querySelector("[data-nav-expand]");
+  var scrim = document.querySelector("[data-scrim]");
+  var indicator = document.querySelector("[data-indicator]");
+  var phoneMQ = window.matchMedia("(max-width: 699.98px) and (min-height: 500px)");
+  var railMQ = window.matchMedia("(max-height: 499.98px)");
+  var sections = links.map(function (a) { return document.getElementById(a.getAttribute("href").slice(1)); });
+  var current = -1;
+  var ticking = false;
 
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) { n.className = cls; }
-    if (text !== undefined && text !== null) { n.textContent = text; }
-    return n;
+  function isDrawer() { return phoneMQ.matches; }
+
+  function setDrawer(open) {
+    if (!isDrawer() || !nav) { return; }
+    var wasOpen = nav.classList.contains("is-open");
+    nav.classList.toggle("is-open", open);
+    root.classList.toggle("drawer-open", open);
+    scrim.classList.toggle("is-open", open);
+    openBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open && !wasOpen) { links[0].focus({ preventScroll: true }); }
+    if (!open && wasOpen && nav.contains(document.activeElement)) { openBtn.focus({ preventScroll: true }); }
   }
 
-  function shopById(id) {
-    return DATA.shops.filter(function (s) { return s.id === id; })[0];
+  function setRailExpanded(open) {
+    if (!railMQ.matches || !nav) { return; }
+    nav.classList.toggle("is-expanded", open);
+    expandBtn.setAttribute("aria-expanded", open ? "true" : "false");
+    expandBtn.setAttribute("aria-label", open ? "Collapse navigation" : "Expand navigation");
   }
 
-  function addressText(s) { return s.address.line1 + ", " + s.address.line2; }
-
-  function directionsHref(s) {
-    return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(s.name + ", " + addressText(s));
+  function go(id, e) {
+    var target = document.getElementById(id);
+    if (!target) { return; }
+    if (e) { e.preventDefault(); }
+    target.scrollIntoView({ behavior: noMotion ? "auto" : "smooth", block: "start" });
+    if (history.replaceState) { history.replaceState(null, "", "#" + id); }
+    if (isDrawer()) { setDrawer(false); }
+    if (railMQ.matches && nav.classList.contains("is-expanded")) { setRailExpanded(false); }
   }
 
-  function telHref(s) { return "tel:" + s.phone.tel; }
-
-  function pillRow(items, cls) {
-    var row = el("ul", "pill-row" + (cls ? " " + cls : ""));
-    items.forEach(function (t) { row.appendChild(el("li", "tag", t)); });
-    return row;
+  function moveIndicator(link) {
+    if (!indicator || !link || !list) { return; }
+    var lr = link.getBoundingClientRect();
+    var cr = list.getBoundingClientRect();
+    indicator.style.transform = "translateY(" + Math.round(lr.top - cr.top) + "px)";
+    indicator.style.height = Math.round(lr.height) + "px";
+    indicator.classList.add("is-ready");
   }
 
-  function facebookButton() {
-    var fb = el("a", "btn btn-glass", "Facebook page");
-    fb.href = DATA.links.facebook;
-    fb.target = "_blank";
-    fb.rel = "noopener";
-    return fb;
-  }
-
-  function shopCard(shop) {
-    var card = el("article", "shop glass reveal");
-    card.setAttribute("data-card", shop.id);
-    card.setAttribute("aria-labelledby", "name-" + shop.id);
-    var h = el("h2", "shop-name", shop.name);
-    h.id = "name-" + shop.id;
-    card.appendChild(h);
-    card.appendChild(el("p", "shop-line", addressText(shop)));
-    card.appendChild(pillRow(shop.tags));
-    var actions = el("div", "actions");
-    if (shop.phone) {
-      var call = el("a", "btn btn-primary", "Call " + shop.phone.display);
-      call.href = telHref(shop);
-      actions.appendChild(call);
-    }
-    var go = el("a", "btn btn-glass", "Directions");
-    go.href = directionsHref(shop);
-    go.target = "_blank";
-    go.rel = "noopener";
-    actions.appendChild(go);
-    actions.appendChild(facebookButton());
-    card.appendChild(actions);
-    return card;
-  }
-
-  var revealIO = ("IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add("is-in");
-        revealIO.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 }) : null;
-
-  function observeReveal(root) {
-    var nodes = (root || document).querySelectorAll(".reveal:not(.is-in)");
-    nodes.forEach(function (n) {
-      if (!revealIO || reduceMotion || saveData) { n.classList.add("is-in"); }
-      else { revealIO.observe(n); }
-    });
-  }
-
-  function renderShops() {
-    var first = document.querySelector("[data-shops-first]");
-    var after = document.querySelector("[data-shops-after]");
-    if (!first || !after) { return; }
-    first.textContent = "";
-    after.textContent = "";
-    var deskNow = desktop && desktop.matches;
-    DATA.shops.forEach(function (shop, i) {
-      var card = shopCard(shop);
-      if (!deskNow && i === 0) { card.classList.remove("reveal"); first.appendChild(card); }
-      else { after.appendChild(card); }
-    });
-    observeReveal(document);
-  }
-
-  function renderMenuPage() {
-    var list = document.querySelector("[data-menu-list]");
-    if (list) {
-      list.textContent = "";
-      DATA.menu.forEach(function (cat) {
-        var card = el("section", "block glass reveal");
-        card.setAttribute("aria-labelledby", "menu-" + cat.id);
-        var h = el("h3", "block-title", cat.name);
-        h.id = "menu-" + cat.id;
-        card.appendChild(h);
-        card.appendChild(pillRow(cat.items, "pill-row-menu"));
-        list.appendChild(card);
-      });
-    }
-    var featured = document.querySelector("[data-featured]");
-    if (featured) {
-      featured.textContent = "";
-      featured.appendChild(pillRow(DATA.menu.reduce(function (acc, cat) { return acc.concat(cat.items); }, []), "pill-row-menu"));
-    }
-  }
-
-  function renderFind() {
-    var list = document.querySelector("[data-find-list]");
-    if (!list) { return; }
-    list.textContent = "";
-    var grid = el("div", "find-grid");
-    DATA.shops.forEach(function (shop) { grid.appendChild(shopCard(shop)); });
-    list.appendChild(grid);
-  }
-
-  function linkButton(label, href, cls) {
-    var a = el("a", cls || "btn btn-glass", label);
-    a.href = href;
-    a.target = "_blank";
-    a.rel = "noopener";
-    return a;
-  }
-
-  function renderContact() {
-    var box = document.querySelector("[data-contact-list]");
-    if (!box) { return; }
-    box.textContent = "";
-    var south = shopById("south");
-    var north = shopById("north");
-
-    var call = el("section", "block glass reveal");
-    call.appendChild(el("h2", "block-title", "Call"));
-    call.appendChild(el("p", "shop-line", south.name + ", " + addressText(south)));
-    var a1 = el("div", "actions");
-    var tel = el("a", "btn btn-primary", "Call " + south.phone.display);
-    tel.href = telHref(south);
-    a1.appendChild(tel);
-    a1.appendChild(linkButton("Directions", directionsHref(south)));
-    call.appendChild(a1);
-    box.appendChild(call);
-
-    var visit = el("section", "block glass reveal");
-    visit.appendChild(el("h2", "block-title", "North shop"));
-    visit.appendChild(el("p", "shop-line", north.name + ", " + addressText(north)));
-    visit.appendChild(pillRow(north.tags));
-    var a2 = el("div", "actions");
-    a2.appendChild(linkButton("Directions", directionsHref(north)));
-    a2.appendChild(facebookButton());
-    visit.appendChild(a2);
-    box.appendChild(visit);
-
-    var online = el("section", "block glass reveal");
-    online.appendChild(el("h2", "block-title", "Online"));
-    var a3 = el("div", "actions");
-    a3.appendChild(linkButton("Facebook page", DATA.links.facebook));
-    a3.appendChild(linkButton("Yelp reviews", DATA.links.yelp));
-    a3.appendChild(linkButton("Google reviews", DATA.links.googleReviews));
-    online.appendChild(a3);
-    box.appendChild(online);
-  }
-
-  function updateBottomBar() {
-    var s = shopById("south");
-    var call = document.querySelector("[data-bb-call]");
-    var map = document.querySelector("[data-bb-map]");
-    if (call) { call.href = telHref(s); }
-    if (map) { map.href = directionsHref(s); }
-  }
-
-  function setMenu(open) {
-    if (!nav || !menuBtn) { return; }
-    nav.classList.toggle("open", open);
-    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
-    if (menuLabel) { menuLabel.textContent = open ? "Close" : "Menu"; }
-  }
-
-  function initMenu() {
-    if (!nav || !menuBtn) { return; }
-    menuBtn.addEventListener("click", function () {
-      setMenu(!nav.classList.contains("open"));
-    });
-    document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && nav.classList.contains("open")) {
-        setMenu(false);
-        menuBtn.focus();
-      }
-    });
-    document.addEventListener("click", function (e) {
-      if (!nav.classList.contains("open")) { return; }
-      if (nav.contains(e.target) || menuBtn.contains(e.target)) { return; }
-      setMenu(false);
-    });
-    nav.addEventListener("click", function (e) {
-      if (e.target.closest && e.target.closest("a")) { setMenu(false); }
-    });
-  }
-
-  function syncBar() {
-    var bar = document.querySelector("[data-bottom]");
-    if (!bar) { return; }
-    var y = window.scrollY || window.pageYOffset || 0;
-    if (y > 300) { barShown = true; }
-    else if (y < 80) { barShown = false; }
-    var isPhone = !(desktop && desktop.matches);
-    var show = barShown && isPhone;
-    bar.classList.toggle("is-shown", show);
-    bar.toggleAttribute("inert", !show);
-  }
-
-  function routeName() {
-    var key = (location.hash || "").replace(/^#\/?/, "");
-    return key === "" ? "home" : key;
-  }
-
-  function showPage(name) {
-    if (!PAGE_TITLES[name]) { name = "home"; }
-    document.querySelectorAll("[data-page]").forEach(function (section) {
-      section.hidden = section.getAttribute("data-page") !== name;
-    });
-    document.querySelectorAll("[data-link]").forEach(function (a) {
-      var on = a.getAttribute("data-link") === name;
-      a.classList.toggle("is-active", on);
-      if (on) { a.setAttribute("aria-current", "page"); }
+  function setCurrent(idx) {
+    if (idx === current) { return; }
+    current = idx;
+    links.forEach(function (a, i) {
+      if (i === idx) { a.setAttribute("aria-current", "true"); }
       else { a.removeAttribute("aria-current"); }
     });
-    document.title = name === "home" ? "Loose Goose · Terre Haute" : PAGE_TITLES[name] + " · Loose Goose";
-    setMenu(false);
-    window.scrollTo(0, 0);
-    var page = document.querySelector("[data-page='" + name + "']");
-    observeReveal(page);
-    var main = document.getElementById("main");
-    if (main) { main.focus({ preventScroll: true }); }
-    syncBar();
+    moveIndicator(links[idx]);
   }
 
+  function updateActive() {
+    ticking = false;
+    var line = window.innerHeight * 0.35;
+    var idx = 0;
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i] && sections[i].getBoundingClientRect().top <= line) { idx = i; }
+    }
+    setCurrent(idx);
+  }
+
+  function scheduleActive() {
+    if (ticking) { return; }
+    ticking = true;
+    requestAnimationFrame(updateActive);
+  }
+
+  links.forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      go(a.getAttribute("href").slice(1), e);
+    });
+  });
+
+  var brandLinks = document.querySelectorAll(".brand, .brand-mini");
+  Array.prototype.forEach.call(brandLinks, function (a) {
+    a.addEventListener("click", function (e) { go("home", e); });
+  });
+
+  if (openBtn) {
+    openBtn.addEventListener("click", function () {
+      setDrawer(!nav.classList.contains("is-open"));
+    });
+  }
+  if (expandBtn) {
+    expandBtn.addEventListener("click", function () {
+      setRailExpanded(!nav.classList.contains("is-expanded"));
+    });
+  }
+  if (scrim) {
+    scrim.addEventListener("click", function () { setDrawer(false); });
+  }
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (nav && nav.classList.contains("is-open")) { setDrawer(false); }
+      else if (nav && nav.classList.contains("is-expanded")) { setRailExpanded(false); }
+    }
+  });
+  function onLayoutChange() {
+    if (!isDrawer()) { setDrawer(false); }
+    if (!railMQ.matches) { setRailExpanded(false); }
+    if (current >= 0) { moveIndicator(links[current]); }
+    scheduleActive();
+  }
+  if (phoneMQ.addEventListener) { phoneMQ.addEventListener("change", onLayoutChange); }
+  if (railMQ.addEventListener) { railMQ.addEventListener("change", onLayoutChange); }
+
+  window.addEventListener("scroll", scheduleActive, { passive: true });
+  window.addEventListener("resize", onLayoutChange);
+
+  // Reveal on scroll (off for reduced motion and data saver)
+  var revealIO = ("IntersectionObserver" in window) ? new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) { entry.target.classList.add("is-in"); revealIO.unobserve(entry.target); }
+    });
+  }, { threshold: 0.12 }) : null;
+  var reveals = document.querySelectorAll(".reveal");
+  Array.prototype.forEach.call(reveals, function (n) {
+    if (!revealIO || noMotion) { n.classList.add("is-in"); }
+    else { revealIO.observe(n); }
+  });
+
+  // Video: scroll position maps to the clip, forward on down and back on up, across the whole page.
   function initScrub() {
     var scrub = document.querySelector("[data-scrub]");
     var video = document.querySelector("[data-hero-video]");
@@ -263,7 +147,7 @@
     video.muted = true;
     video.pause();
 
-    if (reduceMotion || saveData) {
+    if (noMotion) {
       scrub.classList.add("is-static");
       video.preload = "none";
       video.controls = true;
@@ -293,8 +177,7 @@
       queued = true;
       requestAnimationFrame(draw);
     }
-    // One full pass of the clip covers two screen heights of scroll, as the hero did.
-    // The same rate holds at the top of the page; further down, the clip keeps moving.
+    // One full pass of the clip covers two screen heights of scroll, as the approved hero did.
     function scrollPerPass() { return Math.max(1, 2 * window.innerHeight); }
     function draw() {
       queued = false;
@@ -342,23 +225,13 @@
     schedule();
   }
 
-  function init() {
-    renderShops();
-    renderMenuPage();
-    renderFind();
-    renderContact();
-    updateBottomBar();
-    initMenu();
-    initScrub();
-    window.addEventListener("hashchange", function () { showPage(routeName()); });
-    window.addEventListener("scroll", syncBar, { passive: true });
-    window.addEventListener("resize", syncBar);
-    if (desktop && desktop.addEventListener) {
-      desktop.addEventListener("change", function () { setMenu(false); syncBar(); renderShops(); });
-    }
-    showPage(routeName());
-    syncBar();
-  }
+  initScrub();
 
-  init();
+  // Start on the section named in the address bar, if any
+  var hash = (location.hash || "").slice(1);
+  if (hash && document.getElementById(hash)) {
+    document.getElementById(hash).scrollIntoView({ behavior: "auto", block: "start" });
+  }
+  onLayoutChange();
+  scheduleActive();
 })();
